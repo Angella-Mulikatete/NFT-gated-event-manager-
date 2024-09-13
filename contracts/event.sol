@@ -6,16 +6,35 @@ contract NftEventGator{
     struct Event{
         bool isActive;
         address NftAddress; // a specific nft for a specific event
-        // uint256 id;
+        uint256 id;
         uint256 startTime;
         uint256 endTime;
         uint256 maxParticipants;
         uint256 price;
         string location;
         string name;
+        string organizer;
         
     }
-    
+
+    mapping(uint => Event) public eventExists;
+
+    modifier onlyOrganizer {
+        require(msg.sender ==owner, "not owner");
+        _;
+    }
+
+    modifier eventExist(uint256 _id){
+        require((eventExists[_id]).id != 0, "event doesnot exist");
+        _;
+    }
+
+    // modifier isRegistered(uint256 _id){
+    //     require
+    // }
+
+  
+
     constructor(){
         owner = msg.sender;
     }
@@ -24,7 +43,8 @@ contract NftEventGator{
 
     Event[] public events;
 
-    function createEvent(string memory _name,uint256 _price, uint256 _startTime, uint256 _endTime, uint256 _maxParticipants, string memory _location, address _nftAddress ) external {
+    function createEvent(string memory _name,uint256 _price, uint256 _startTime, uint256 _endTime, uint256 _maxParticipants, string memory _location, address _nftAddress ) external onlyOrganizer {
+        // require(owner != 0, "zero address detected");
         require(_startTime < _endTime, "");
 
         Event memory newEvent = Event({
@@ -42,7 +62,9 @@ contract NftEventGator{
     }
 
     //users registering for the event
-    function claimingTickets() external{}
+    function registerForEvent(uint256 eventId) external {
+       
+    }
 
     //when users attend the event, we need to verify their nft
     function verifyTicket() public view returns(bool){}
