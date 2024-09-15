@@ -12,7 +12,8 @@ contract EventManager is Ownable(msg.sender){ //this inherits from Ownable so th
 
     struct Event{
         bytes32 id;
-        address nftContract;
+        address payable nftContract;
+        address organizer;
         uint256 startdate;
         uint256 enddate;
         uint256 capacity;
@@ -25,11 +26,14 @@ contract EventManager is Ownable(msg.sender){ //this inherits from Ownable so th
     mapping(bytes32 => address[]) public eventNFTs;
 
     event EventCreated(bytes32 indexed eventId, address nftContract, uint256 startDate, uint256 endDate, uint256 totalCapacity, TicketType ticketType);
+    event RegisteredForEvent(bytes32 indexed eventId, address attendee);
+    event VerifiedForEvent(bytes32 indexed eventId, address attendee);
+
 
 //compilation error is encountered when you try to instantiate a struct that contains a mapping as an attribute.
 //the solution is to declare the struct in storage before we instantiate a pointer to it.
 
-    function createEvent(string memory _name, uint256 _startdate, uint256 _enddate ,uint256 _capacity, TicketType _ticketType) public onlyOwner {
+    function createEvent(string memory _name, uint256 _startdate, uint256 _enddate ,uint256 _capacity, TicketType _ticketType) payable public onlyOwner {
         bytes32 eventId = keccak256(abi.encodePacked(nextEventId++, _name));
         require(_capacity > 0, "Capacity must be greater than 0");
 
@@ -37,7 +41,8 @@ contract EventManager is Ownable(msg.sender){ //this inherits from Ownable so th
 
         Event storage newEvent = events[eventId];
             newEvent.id = eventId;
-            newEvent.nftContract = address(nftInstance);
+            newEvent.nftContract = payable (address(nftInstance));
+            newEvent.organizer = msg.sender;
             newEvent.startdate = _startdate;
             newEvent.enddate = _enddate;
             newEvent.capacity = _capacity;
@@ -49,12 +54,51 @@ contract EventManager is Ownable(msg.sender){ //this inherits from Ownable so th
         //The minting process involves calling the mintTicket function of the EventNft contract, which then mints NFTs and assigns them to the organizer (msg.sender).
 
         for(uint256 i=0; i< newEvent.capacity; i++){
-            nftInstance.mintTicket{value:0}(uint256(newEvent.ticketType)); 
+            nftInstance.mintTicket{value:msg.value}(uint256(newEvent.ticketType)); 
             eventNFTs[eventId].push(address(this));
         }
 
         emit EventCreated(newEvent.id, newEvent.nftContract, newEvent.startdate, newEvent.enddate, newEvent.capacity,newEvent.ticketType);
     }
+
+ //registering for the event
+    function registerEvent(bytes32 eventId) external payable{
+        Event storage currentEvent = events[eventId];
+
+        require(currentEvent.remainingTickets >0, "Event is already full");
+        require(block.timestamp >= currentEvent.startdate && block.timestamp <= currentEvent.enddate, "Event ended");
+        require(!currentEvent.attendees[msg.sender], "Already registered");
+
+        //transfer nft to the attendee
+        EventNft _nftContract = EventNft(currentEvent.nftContract);
+        uint256 ticketId = currentEvent.capacity - currentEvent.remainingTickets + 1;
+
+        require(_nftContract.ownerOf(ticketId) == currentEvent.organizer, "ticket not owned by organizer");
+        _nftContract.safeTransferFrom(address(this), msg.sender, ticketId);
+
+        //mark attendee as registered
+        currentEvent.attendees[msg.sender] = true;
+        currentEvent.remainingTickets --;
+
+        emit RegisteredForEvent(eventId, msg.sender);
+
+    }
+
+    //verify Attendee
+
+    function verifyAttendance(bytes32 eventId, address attenddee) external view returns(bool){
+        Event storage currentEvent = events[eventId];
+
+        EventNft nftContract = EventNft(currentEvent.nftContract);
+
+        for(uint i = 0; i< currentEvent.capacity; i++){
+            if(nftContract.ownerOf(i + 1) == attenddee && currentEvent.attendees[attenddee]){
+                return true;
+            }
+        }
+        return false;
+    }
+
 
    
 }
