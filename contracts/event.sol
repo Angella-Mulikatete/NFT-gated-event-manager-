@@ -31,8 +31,6 @@ contract NftEventGator{
     }
 
 
-    // uint256 nextEventId;
-
     mapping(uint256 => Event) public events;
     // mapping(address => uint256) public participants; //mapping address to id of participants
     mapping(uint256 => mapping(address => bool)) registeredParticipants; //eventId => participantAddress => boolean
@@ -42,21 +40,21 @@ contract NftEventGator{
         _;
     }
 
-    modifier canRegister(uint256 eventId){
-        require(events[eventId].registeredCount < events[eventId].maxParticipants, "Event is full"); //checking if the event is not full
-        require(!registeredParticipants[eventId][msg.sender], "Already Registered");
-        _;
-    }
+    // modifier canRegister(uint256 eventId){
+    //     require(events[eventId].registeredCount < events[eventId].maxParticipants, "Event is full"); //checking if the event is not full
+    //     require(!registeredParticipants[eventId][msg.sender], "Already Registered");
+    //     _;
+    // }
 
-    modifier eventExists(uint256 eventId){
-        require(!events[eventId].isActive, "Event doesnot exist");
-        _;
-    }
+    // modifier eventExists(uint256 eventId){
+    //     require(!events[eventId].isActive, "Event doesnot exist");
+    //     _;
+    // }
 
-    modifier hasNft(uint256 eventId){
-        require(IERC721(events[eventId].NFTAddress).balanceOf(msg.sender) > 0, "There is no Nft yet");
-        _;
-    }
+    // modifier hasNft(uint256 eventId){
+    //     require(IERC721(events[eventId].NFTAddress).balanceOf(msg.sender) > 0, "There is no Nft yet");
+    //     _;
+    // }
 
     function createEvent(string memory _name, uint256 _price, uint256 _startTime, uint256 _endTime,  string memory _location, address _nftAddress, string memory _organizer ) external onlyOrganizer {
         // require(owner != 0, "zero address detected");
@@ -82,7 +80,14 @@ contract NftEventGator{
     }
 
     //users registering for the event
-    function registerParticipants(uint256 eventId) external  canRegister(eventId) eventExists(eventId) hasNft(eventId){
+    function registerParticipants(uint256 eventId) external{
+      
+       require(events[eventId].registeredCount < events[eventId].maxParticipants, "Event is full"); //checking if the event is not full
+       require(!registeredParticipants[eventId][msg.sender], "Already Registered"); 
+       require(!events[eventId].isActive, "Event is active");
+    //    require(events[eventId]!=0, "event doen not exist");
+       require(IERC721(events[eventId].NFTAddress).balanceOf(msg.sender) > 0, "There is no Nft yet");
+
        events[eventId].registeredCount ++;
        registeredParticipants[eventId][msg.sender] == true;
     }
