@@ -73,7 +73,11 @@ contract EventNft is ERC721, ERC721URIStorage, ERC721Burnable, Ownable {
         ticketTypes[ticketTypeId].capacity--;
 
     }
-    
+
+    // function checkTicketOwnership(address account, uint256 ticketTypeId) public view returns (bool) {
+    //     return userTickets[account][ticketTypeId] > 0;
+    // }
+
     function burnTicket(uint256 ticketTypeId) public {
         require(userTickets[msg.sender][ticketTypeId] > 0, "User does not own this ticket type");
         userTickets[msg.sender][ticketTypeId]--;
