@@ -11,24 +11,32 @@ contract EventNft is ERC721, ERC721URIStorage, ERC721Burnable, Ownable {
     uint256 nextTicketId;
     uint maxTotalTickets; //total number of tickets that we want to sell
     uint maxTotalMintedTickets; //tracking the number of tickets that will be minted
-    uint256 ticketPrice;
     bool saleIsActive; //tracks if we are selling the tickest
+    uint256 totalTickets;
+
+    struct TicketType{
+        string name;
+        uint capacity;
+        uint256 ticketPrice;
+        bool isGeneralAdmission;
+    }
 
     string private baseURI;
 
-    mapping(address => uint256[]) private ownedTickets; 
+    mapping(address => uint256) private ownedTickets; 
+    mapping (uint256 => TicketType) public ticketTypes;
+    mapping(address => mapping(uint256 => uint256)) public userTickets;
 
 
-    constructor(uint256 _maxTotalTickets, uint256 _ticketPrice) ERC721("eventNFT", "ENT") Ownable(msg.sender){
+    constructor(uint256 _maxTotalTickets) ERC721("eventNFT", "ENT") Ownable(msg.sender){
         maxTotalTickets = _maxTotalTickets;
-        ticketPrice = _ticketPrice;
         nextTicketId = 1;
     }
     
-    //setting the base URI for the token metadata
-    function setBaseURI(string memory _baseURI) public {
-        baseURI = _baseURI;
-    }
+    // //setting the base URI for the token metadata
+    // function setBaseURI(string memory _baseURI) public {
+    //     baseURI = _baseURI;
+    // }
 
     function _baseURI() internal view override returns (string memory ){
         return baseURI;
@@ -40,22 +48,43 @@ contract EventNft is ERC721, ERC721URIStorage, ERC721Burnable, Ownable {
         saleIsActive = !saleIsActive;
     }
 
-    function mintTicket() public payable {
-        require(saleIsActive, "sale is not active");
-        require(nextTicketId <= maxTotalTickets, "tickets already sold out");
-        require(msg.value == ticketPrice, "Incorrect ticket price");
+    function createTicket(string memory _name, uint256 _capacity, uint256 _ticketPrice) public onlyOwner {
+        ticketTypes[maxTotalTickets] = TicketType({
+            name : _name,
+            capacity : _capacity,
+            ticketPrice: _ticketPrice,
+            isGeneralAdmission: true
+        });
+
+        totalTickets++;
+    }
+
+
+    function mintTicket(uint256 ticketTypeId) public payable {
+        // require(saleIsActive, "sale is not active");
+        require(ticketTypes[ticketTypeId].capacity > 0, "invalid ticket");
+        require(totalTickets < maxTotalTickets, "tickets already sold out");
 
         //mint the NFT(ticket)
-        _safeMint(msg.sender,nextTicketId);
+        _safeMint(msg.sender,totalTickets);
 
         //track tickets owned by this address
-        ownedTickets[msg.sender].push(nextTicketId);
+        userTickets[msg.sender][ticketTypeId]++;
+        ticketTypes[ticketTypeId].capacity--;
 
     }
-
-    function getOwnedTickets(address owner) public view returns(uint256[] memory){
-        return ownedTickets[owner];
+    
+    function burnTicket(uint256 ticketTypeId) public {
+        require(userTickets[msg.sender][ticketTypeId] > 0, "User does not own this ticket type");
+        userTickets[msg.sender][ticketTypeId]--;
+        // if (userTickets[msg.sender][ticketTypeId] == 0) {
+        //     delete userTickets[msg.sender];
+        // }
     }
+
+    // function getOwnedTickets(address owner) public view returns(uint256[] memory){
+    //     return ownedTickets[owner];
+    // }
 
     //withdraw funds by the owner
     function withdrawFunds() public onlyOwner{
