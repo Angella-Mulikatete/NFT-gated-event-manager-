@@ -100,6 +100,31 @@ contract EventManager is Ownable(msg.sender){ //this inherits from Ownable so th
     }
 
 
+     // Get event details
+    function getEventDetails(bytes32 eventId) external view returns (
+        bytes32 id,
+        address nftContract,
+        address organizer,
+        uint256 startDate,
+        uint256 endDate,
+        uint256 totalCapacity,
+        uint256 remainingTickets,
+        TicketType ticketType
+    ) {
+        Event storage currentEvent = events[eventId];
+        return (
+            currentEvent.id,
+            currentEvent.nftContract,
+            currentEvent.organizer,
+            currentEvent.startdate,
+            currentEvent.enddate,
+            currentEvent.capacity,
+            currentEvent.remainingTickets,
+            currentEvent.ticketType
+        );
+    }
+
+
    
 }
     
