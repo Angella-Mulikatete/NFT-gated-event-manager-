@@ -48,16 +48,16 @@ contract EventNft is ERC721, ERC721URIStorage, ERC721Burnable, Ownable {
         saleIsActive = !saleIsActive;
     }
 
-    function createTicket(string memory _name, uint256 _capacity, uint256 _ticketPrice) public onlyOwner {
-        ticketTypes[maxTotalTickets] = TicketType({
-            name : _name,
-            capacity : _capacity,
-            ticketPrice: _ticketPrice,
-            isGeneralAdmission: true
-        });
+    // function createTicket(string memory _name, uint256 _capacity, uint256 _ticketPrice) public onlyOwner {
+    //     ticketTypes[maxTotalTickets] = TicketType({
+    //         name : _name,
+    //         capacity : _capacity,
+    //         ticketPrice: _ticketPrice,
+    //         isGeneralAdmission: true
+    //     });
 
-        totalTickets++;
-    }
+    //     totalTickets++;
+    // }
 
 
     function mintTicket(uint256 ticketTypeId) public payable {
