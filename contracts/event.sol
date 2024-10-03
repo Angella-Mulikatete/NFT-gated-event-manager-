@@ -22,6 +22,10 @@ contract EventManager is Ownable(msg.sender){ //this inherits from Ownable so th
         mapping(address => bool) attendees;
     }
 
+    constructor() {
+        nextEventId = 1;
+    }
+
     mapping(bytes32 => Event) public events;
     mapping(bytes32 => address[]) public eventNFTs;
 
@@ -99,8 +103,7 @@ contract EventManager is Ownable(msg.sender){ //this inherits from Ownable so th
         return false;
     }
 
-
-     // Get event details
+ // Get event details
     function getEventDetails(bytes32 eventId) external view returns (
         bytes32 id,
         address nftContract,
