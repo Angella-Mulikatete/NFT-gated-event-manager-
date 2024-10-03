@@ -35,3 +35,6 @@ const config: HardhatUserConfig = {
 };
 
 export default config;
+
+// EventManagerModule#EventManager - 0x36c5A8a530cCf1BA71d4ed84A11d1294425C4378
+//EventNftModule#EventNft - 0x8b2b012759558a8Ce7C585ca41d01fbe57d6325b
